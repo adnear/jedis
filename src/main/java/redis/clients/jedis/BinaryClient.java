@@ -1256,4 +1256,23 @@ public class BinaryClient extends Connection {
   public void pfmerge(final byte[] destkey, final byte[]... sourcekeys) {
     sendCommand(PFMERGE, joinParameters(destkey, sourcekeys));
   }
+
+  // Geo Commands
+
+
+    public void geoadd(final byte[] key, final double lat, final double lng, final byte[] member){
+      sendCommand(GEOADD, key ,toByteArray(lat),toByteArray(lng),member);
+
+    }
+
+  public void georadius(final byte[] key, final double lat, final double lng,final double radius, final byte[] radius_type, final byte[]... fields){
+    sendCommand(GEORADIUS,key,toByteArray(lat),toByteArray(lng),toByteArray(radius),radius_type,fields[0]);
+   // sendCommand(GEORADIUS,joinParameters(key,joinParameters(toByteArray(lat),joinParameters(toByteArray(lng),joinParameters(toByteArray(radius),joinParameters(radius_type, fields))))));
+
+  }
+
+
+
+
+
 }
