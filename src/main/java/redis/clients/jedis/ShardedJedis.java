@@ -656,4 +656,19 @@ public class ShardedJedis extends BinaryShardedJedis implements JedisCommands, C
     return j.pfcount(key);
   }
 
+  // GeoCommands
+ @Override
+  public Long geoadd(String key, double lat,double lon, String member) {
+    Jedis j = getShard(key);
+    return j.geoadd(key,lat,lon,member);
+  }
+
+  @Override
+  public List<String> georadius(String key, double lat,double lon, double radius,String radius_type,String... fields){
+    Jedis j = getShard(key);
+    return j.georadius(key,lat,lon,radius,radius_type,fields);
+  }
+
+
+
 }

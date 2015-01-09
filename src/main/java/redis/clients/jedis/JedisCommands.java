@@ -214,6 +214,14 @@ public interface JedisCommands {
 
   Long rpushx(String key, String... string);
 
+  // Geo Commands
+
+  Long geoadd(String key, double lat,double lon, String member);
+
+  List<String> georadius(String key, double lat,double lon, double radius,String radius_type,String... fields);
+
+
+
   /**
    * @deprecated unusable command, this will be removed in 3.0.0.
    */
@@ -249,5 +257,7 @@ public interface JedisCommands {
   Long pfadd(final String key, final String... elements);
 
   long pfcount(final String key);
+
+
 
 }
