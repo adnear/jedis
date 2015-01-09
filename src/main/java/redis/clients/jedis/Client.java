@@ -840,6 +840,22 @@ public class Client extends BinaryClient implements Commands {
     zscan(SafeEncoder.encode(key), SafeEncoder.encode(cursor), params);
   }
 
+
+  // Geo Commands
+
+  public void geoadd(final String key, final double lat,final double lng, final String member){
+    geoadd(SafeEncoder.encode(key),lat,lng,SafeEncoder.encode(member));
+
+  }
+
+  public void georadius(final String key, final double lat,final double lng, final double radius,final String radius_type,final String... fields){
+   // geoadd(SafeEncoder.encode(key),lat,lng,SafeEncoder.encode(member));
+     georadius(SafeEncoder.encode(key), lat, lng, radius, SafeEncoder.encode(radius_type), SafeEncoder.encodeMany(fields));
+
+
+  }
+
+
   public void cluster(final String subcommand, final int... args) {
     final byte[][] arg = new byte[args.length + 1][];
     for (int i = 1; i < arg.length; i++) {

@@ -549,6 +549,12 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     return client.getIntegerReply();
   }
 
+  public Long reappend(final String key, final String value) {
+    checkIsInMulti();
+    client.append(key, value);
+    return client.getIntegerReply();
+  }
+
   /**
    * Return a subset of the string from offset start to offset end (both offsets are inclusive).
    * Negative offsets can be used in order to provide an offset starting from the end of the string.
@@ -3117,6 +3123,22 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     client.pfcount(key);
     return client.getIntegerReply();
   }
+
+  // Geo Commands
+  public Long geoadd(final String key,final double lat,final double lon,final String member){
+    checkIsInMulti();
+    client.geoadd(key,lat,lon,member);
+    return client.getIntegerReply();
+  }
+
+  // Geo Commands
+  public List<String> georadius(final String key,final double lat,final double lon,final double radius,final String radius_type,String... fields){
+    checkIsInMulti();
+    client.georadius(key,lat,lon,radius,radius_type,fields);
+    return client.getMultiBulkReply();
+  }
+
+
 
   @Override
   public long pfcount(String... keys) {

@@ -291,4 +291,15 @@ public interface Commands {
   public void zscan(final String key, final String cursor, final ScanParams params);
 
   public void waitReplicas(int replicas, long timeout);
+
+  public void geoadd(final String key, final double lat,final  double lng, final String member);
+
+  public void georadius(final String key,final double lat,final double lon,final double radius,final String radius_type,String... fields);
+
+
+  //public void georadius(final String key,final String... strings);
+
+ // public void georadiusbymember(final String key,final String... strings);
+
+
 }
