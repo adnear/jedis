@@ -3216,12 +3216,24 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
 
   // Geo Commands
   public List<String> georadius(final String key,final double lat,final double lon,final double radius,final String radius_type,String... fields){
-    checkIsInMulti();
-    client.georadius(key,lat,lon,radius,radius_type,fields);
-    return client.getMultiBulkReply();
+      checkIsInMulti();
+      client.georadius(key, lat, lon, radius, radius_type, fields);
+      List<Object> results = client.getObjectMultiBulkReply();
+      List<String> resultList = new ArrayList<String>();
+      for (Object result : results) {
+          if (result instanceof List) {
+              List multiValuedResult = (List) result;
+              StringBuilder sb = new StringBuilder();
+              for (Object value : multiValuedResult) {
+                  sb.append(new String((byte[]) value)).append(" ");
+              }
+              resultList.add(sb.toString().substring(0, sb.length() - 1));
+          } else if (result instanceof byte[]) {
+              resultList.add(new String((byte[])result));
+          }
+      }
+      return resultList;
   }
-
-
 
   @Override
   public long pfcount(String... keys) {

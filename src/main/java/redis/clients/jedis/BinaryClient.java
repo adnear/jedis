@@ -1201,19 +1201,21 @@ public class BinaryClient extends Connection {
   // Geo Commands
 
 
-    public void geoadd(final byte[] key, final double lat, final double lng, final byte[] member){
-      sendCommand(GEOADD, key ,toByteArray(lat),toByteArray(lng),member);
-
-    }
-
-  public void georadius(final byte[] key, final double lat, final double lng,final double radius, final byte[] radius_type, final byte[]... fields){
-    sendCommand(GEORADIUS,key,toByteArray(lat),toByteArray(lng),toByteArray(radius),radius_type,fields[0]);
-   // sendCommand(GEORADIUS,joinParameters(key,joinParameters(toByteArray(lat),joinParameters(toByteArray(lng),joinParameters(toByteArray(radius),joinParameters(radius_type, fields))))));
-
+  public void geoadd(final byte[] key, final double lat, final double lng, final byte[] member){
+    sendCommand(GEOADD, key ,toByteArray(lat),toByteArray(lng),member);
   }
 
+  public void georadius(final byte[] key, final double lat, final double lng, final double radius,
+                        final byte[] radius_type, final byte[]... fields){
+    byte[][] fixedParams = {key, toByteArray(lat), toByteArray(lng), toByteArray(radius), radius_type};
+    byte[][] commandArgs = joinParameters(fixedParams, fields);
+    sendCommand(GEORADIUS, commandArgs);
+  }
 
-
-
-
+  private byte[][] joinParameters(byte[][] fixedParams, byte[][] fields) {
+    byte[][] finalParams = new byte[fixedParams.length + fields.length][];
+    System.arraycopy(fixedParams, 0, finalParams, 0, fixedParams.length);
+    System.arraycopy(fields, 0, finalParams, fixedParams.length, fields.length);
+    return finalParams;
+  }
 }
