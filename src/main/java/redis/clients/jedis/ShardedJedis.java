@@ -69,9 +69,19 @@ public class ShardedJedis extends BinaryShardedJedis implements JedisCommands, C
     return j.expire(key, seconds);
   }
 
+  public Long pexpire(final String key, final long milliseconds) {
+    Jedis j = getShard(key);
+    return j.pexpire(key, milliseconds);
+  }
+
   public Long expireAt(String key, long unixTime) {
     Jedis j = getShard(key);
     return j.expireAt(key, unixTime);
+  }
+
+  public Long pexpireAt(String key, long millisecondsTimestamp) {
+    Jedis j = getShard(key);
+    return j.pexpireAt(key, millisecondsTimestamp);
   }
 
   public Long ttl(String key) {
@@ -337,6 +347,11 @@ public class ShardedJedis extends BinaryShardedJedis implements JedisCommands, C
   public String spop(String key) {
     Jedis j = getShard(key);
     return j.spop(key);
+  }
+
+  public Set<String> spop(String key, long count) {
+    Jedis j = getShard(key);
+    return j.spop(key, count);
   }
 
   public Long scard(String key) {

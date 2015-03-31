@@ -359,6 +359,11 @@ abstract class MultiKeyPipelineBase extends PipelineBase implements BasicRedisPi
     return getResponse(BuilderFactory.STRING);
   }
 
+  public Response<String> info(final String section) {
+    client.info(section);
+    return getResponse(BuilderFactory.STRING);
+  }
+
   public Response<List<String>> time() {
     client.time();
     return getResponse(BuilderFactory.STRING_LIST);
@@ -381,7 +386,10 @@ abstract class MultiKeyPipelineBase extends PipelineBase implements BasicRedisPi
 
   public Response<String> select(int index) {
     client.select(index);
-    return getResponse(BuilderFactory.STRING);
+    Response<String> response = getResponse(BuilderFactory.STRING);
+    client.setDb(index);
+
+    return response;
   }
 
   public Response<Long> bitop(BitOP op, byte[] destKey, byte[]... srcKeys) {
