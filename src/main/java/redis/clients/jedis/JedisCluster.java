@@ -1529,7 +1529,7 @@ public class JedisCluster implements JedisCommands, BasicCommands, Closeable {
 
   @Override
   public Long geoadd(final String key, final double lat,final double lon, final String member) {
-    return new JedisClusterCommand<Long>(connectionHandler, timeout, maxRedirections) {
+    return new JedisClusterCommand<Long>(connectionHandler, maxRedirections) {
       @Override
       public Long execute(Jedis connection) {
         return connection.geoadd(key,lat,lon, member);
@@ -1540,7 +1540,7 @@ public class JedisCluster implements JedisCommands, BasicCommands, Closeable {
 
   @Override
   public List<String> georadius(final String key,final double lat,final double lon, final double radius, final String radius_type, final String... fields) {
-    return new JedisClusterCommand<List<String>>(connectionHandler, timeout, maxRedirections) {
+    return new JedisClusterCommand<List<String>>(connectionHandler, maxRedirections) {
       @Override
       public List<String>  execute(Jedis connection) {
         return connection.georadius(key,lat,lon,radius,radius_type,fields);
