@@ -1,13 +1,7 @@
 package redis.clients.jedis.tests;
 
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
@@ -256,6 +250,29 @@ public class PipeliningTest extends Assert {
   }
 
   @Test
+  public void multiWithMassiveRequests() {
+    Pipeline p = jedis.pipelined();
+    p.multi();
+
+    List<Response<?>> responseList = new ArrayList<Response<?>>();
+    for (int i = 0; i < 100000; i++) {
+      // any operation should be ok, but shouldn't forget about timeout
+      responseList.add(p.setbit("test", 1, true));
+    }
+
+    Response<List<Object>> exec = p.exec();
+    p.sync();
+
+    // we don't need to check return value
+    // if below codes run without throwing Exception, we're ok
+    exec.get();
+
+    for (Response<?> resp : responseList) {
+      resp.get();
+    }
+  }
+
+  @Test
   public void multiWithSync() {
     jedis.set("foo", "314");
     jedis.set("bar", "foo");
@@ -329,7 +346,7 @@ public class PipeliningTest extends Assert {
 
     assertArrayEquals(SafeEncoder.encode("success!"), (byte[]) result.get());
   }
-  
+
   @Test
   public void testEvalKeyAndArg() {
     String key = "test";
@@ -359,11 +376,9 @@ public class PipeliningTest extends Assert {
 
     Pipeline bP = jedis.pipelined();
     bP.set(bKey, SafeEncoder.encode("0"));
-    Response<Object> bResult0 = bP.eval(bScript, Arrays.asList(bKey),
-        Arrays.asList(bArg));
+    Response<Object> bResult0 = bP.eval(bScript, Arrays.asList(bKey), Arrays.asList(bArg));
     bP.incr(bKey);
-    Response<Object> bResult1 = bP.eval(bScript, Arrays.asList(bKey),
-        Arrays.asList(bArg));
+    Response<Object> bResult1 = bP.eval(bScript, Arrays.asList(bKey), Arrays.asList(bArg));
     Response<byte[]> bResult2 = bP.get(bKey);
     bP.sync();
 
@@ -447,11 +462,9 @@ public class PipeliningTest extends Assert {
 
     Pipeline p = jedis.pipelined();
     p.set(bKey, SafeEncoder.encode("0"));
-    Response<Object> result0 = p.evalsha(bSha1, Arrays.asList(bKey),
-        Arrays.asList(bArg));
+    Response<Object> result0 = p.evalsha(bSha1, Arrays.asList(bKey), Arrays.asList(bArg));
     p.incr(bKey);
-    Response<Object> result1 = p.evalsha(bSha1, Arrays.asList(bKey),
-        Arrays.asList(bArg));
+    Response<Object> result1 = p.evalsha(bSha1, Arrays.asList(bKey), Arrays.asList(bArg));
     Response<byte[]> result2 = p.get(bKey);
     p.sync();
 
@@ -552,6 +565,6 @@ public class PipeliningTest extends Assert {
   }
 
   private <T> Matcher<Iterable<? super T>> listWithItem(T expected) {
-    return CoreMatchers.<T>hasItem(equalTo(expected));
+    return CoreMatchers.<T> hasItem(equalTo(expected));
   }
 }
