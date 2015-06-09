@@ -6,7 +6,7 @@ Jedis is a blazingly small and sane [Redis](http://github.com/antirez/redis "Red
 
 Jedis was conceived to be EASY to use.
 
-Jedis is fully compatible with redis 2.8.5.
+Jedis is fully compatible with redis 2.8.x and 3.0.x.
 
 ## Community
 
@@ -48,7 +48,7 @@ Or use it as a maven dependency:
 <dependency>
     <groupId>redis.clients</groupId>
     <artifactId>jedis</artifactId>
-    <version>2.6.2</version>
+    <version>2.7.2</version>
     <type>jar</type>
     <scope>compile</scope>
 </dependency>

@@ -3,7 +3,7 @@ package redis.clients.jedis;
 import java.net.URI;
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -80,7 +80,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
    * @param nxxx NX|XX, NX -- Only set the key if it does not already exist. XX -- Only set the key
    *          if it already exist.
    * @param expx EX|PX, expire time units: EX = seconds; PX = milliseconds
-   * @param time expire time in the units of {@param #expx}
+   * @param time expire time in the units of <code>expx</code>
    * @return Status code reply
    */
   public String set(final String key, final String value, final String nxxx, final String expx,
@@ -244,8 +244,8 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
    * @param key
    * @param seconds
    * @return Integer reply, specifically: 1: the timeout was set. 0: the timeout was not set since
-   *         the key already has an associated timeout (this may happen only in Redis versions <
-   *         2.1.3, Redis >= 2.1.3 will happily update the timeout), or the key does not exist.
+   *         the key already has an associated timeout (this may happen only in Redis versions &lt;
+   *         2.1.3, Redis &gt;= 2.1.3 will happily update the timeout), or the key does not exist.
    */
   public Long expire(final String key, final int seconds) {
     checkIsInMulti();
@@ -273,8 +273,8 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
    * @param key
    * @param unixTime
    * @return Integer reply, specifically: 1: the timeout was set. 0: the timeout was not set since
-   *         the key already has an associated timeout (this may happen only in Redis versions <
-   *         2.1.3, Redis >= 2.1.3 will happily update the timeout), or the key does not exist.
+   *         the key already has an associated timeout (this may happen only in Redis versions &lt;
+   *         2.1.3, Redis &gt;= 2.1.3 will happily update the timeout), or the key does not exist.
    */
   public Long expireAt(final String key, final long unixTime) {
     checkIsInMulti();
@@ -863,8 +863,8 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
    * <b>Out-of-range indexes</b>
    * <p>
    * Indexes out of range will not produce an error: if start is over the end of the list, or start
-   * > end, an empty list is returned. If end is over the end of the list Redis will threat it just
-   * like the last element of the list.
+   * &gt; end, an empty list is returned. If end is over the end of the list Redis will threat it
+   * just like the last element of the list.
    * <p>
    * Time complexity: O(start+n) (with n being the length of the range and start being the start
    * offset)
@@ -891,7 +891,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
    * example -1 is the last element of the list, -2 the penultimate element and so on.
    * <p>
    * Indexes out of range will not produce an error: if start is over the end of the list, or start
-   * > end, an empty list is left as value. If end over the end of the list Redis will threat it
+   * &gt; end, an empty list is left as value. If end over the end of the list Redis will threat it
    * just like the last element of the list.
    * <p>
    * Hint: the obvious use of LTRIM is together with LPUSH/RPUSH. For example:
@@ -1068,7 +1068,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     if (members == null) {
       return null;
     }
-    return new HashSet<String>(members);
+    return SetFromList.of(members);
   }
 
   /**
@@ -1111,7 +1111,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     if (members == null) {
       return null;
     }
-    return new HashSet<String>(members);
+    return SetFromList.of(members);
   }
 
   /**
@@ -1189,7 +1189,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     if (members == null) {
       return null;
     }
-    return new HashSet<String>(members);
+    return SetFromList.of(members);
   }
 
   /**
@@ -1227,7 +1227,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     if (members == null) {
       return null;
     }
-    return new HashSet<String>(members);
+    return SetFromList.of(members);
   }
 
   /**
@@ -1249,14 +1249,14 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
    * Return the difference between the Set stored at key1 and all the Sets key2, ..., keyN
    * <p>
    * <b>Example:</b>
-   * 
+   *
    * <pre>
    * key1 = [x, a, b, c]
    * key2 = [c]
    * key3 = [a, d]
-   * SDIFF key1,key2,key3 => [x, b]
+   * SDIFF key1,key2,key3 =&gt; [x, b]
    * </pre>
-   * 
+   *
    * Non existing keys are considered like empty sets.
    * <p>
    * <b>Time complexity:</b>
@@ -1342,7 +1342,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     if (members == null) {
       return null;
     }
-    return new LinkedHashSet<String>(members);
+    return SetFromList.of(members);
   }
 
   /**
@@ -1438,21 +1438,19 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     if (members == null) {
       return null;
     }
-    return new LinkedHashSet<String>(members);
+    return SetFromList.of(members);
   }
 
   public Set<Tuple> zrangeWithScores(final String key, final long start, final long end) {
     checkIsInMulti();
     client.zrangeWithScores(key, start, end);
-    Set<Tuple> set = getTupledSet();
-    return set;
+    return getTupledSet();
   }
 
   public Set<Tuple> zrevrangeWithScores(final String key, final long start, final long end) {
     checkIsInMulti();
     client.zrevrangeWithScores(key, start, end);
-    Set<Tuple> set = getTupledSet();
-    return set;
+    return getTupledSet();
   }
 
   /**
@@ -1516,67 +1514,67 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
    * <b>examples:</b>
    * <p>
    * Given are the following sets and key/values:
-   * 
+   *
    * <pre>
    * x = [1, 2, 3]
    * y = [a, b, c]
-   * 
+   *
    * k1 = z
    * k2 = y
    * k3 = x
-   * 
+   *
    * w1 = 9
    * w2 = 8
    * w3 = 7
    * </pre>
-   * 
+   *
    * Sort Order:
-   * 
+   *
    * <pre>
    * sort(x) or sort(x, sp.asc())
-   * -> [1, 2, 3]
-   * 
+   * -&gt; [1, 2, 3]
+   *
    * sort(x, sp.desc())
-   * -> [3, 2, 1]
-   * 
+   * -&gt; [3, 2, 1]
+   *
    * sort(y)
-   * -> [c, a, b]
-   * 
+   * -&gt; [c, a, b]
+   *
    * sort(y, sp.alpha())
-   * -> [a, b, c]
-   * 
+   * -&gt; [a, b, c]
+   *
    * sort(y, sp.alpha().desc())
-   * -> [c, a, b]
+   * -&gt; [c, a, b]
    * </pre>
-   * 
+   *
    * Limit (e.g. for Pagination):
-   * 
+   *
    * <pre>
    * sort(x, sp.limit(0, 2))
-   * -> [1, 2]
-   * 
+   * -&gt; [1, 2]
+   *
    * sort(y, sp.alpha().desc().limit(1, 2))
-   * -> [b, a]
+   * -&gt; [b, a]
    * </pre>
-   * 
+   *
    * Sorting by external keys:
-   * 
+   *
    * <pre>
    * sort(x, sb.by(w*))
-   * -> [3, 2, 1]
-   * 
+   * -&gt; [3, 2, 1]
+   *
    * sort(x, sb.by(w*).desc())
-   * -> [1, 2, 3]
+   * -&gt; [1, 2, 3]
    * </pre>
-   * 
+   *
    * Getting external keys:
-   * 
+   *
    * <pre>
    * sort(x, sp.by(w*).get(k*))
-   * -> [x, y, z]
-   * 
+   * -&gt; [x, y, z]
+   *
    * sort(x, sp.by(w*).get(#).get(k*))
-   * -> [3, x, 2, y, 1, z]
+   * -&gt; [3, x, 2, y, 1, z]
    * </pre>
    * @see #sort(String)
    * @see #sort(String, SortingParams, String)
@@ -1687,22 +1685,6 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     } finally {
       client.rollbackTimeout();
     }
-  }
-
-  /**
-   * @deprecated unusable command, this command will be removed in 3.0.0.
-   */
-  @Deprecated
-  public List<String> blpop(String arg) {
-    return blpop(new String[] { arg });
-  }
-
-  /**
-   * @deprecated unusable command, this command will be removed in 3.0.0.
-   */
-  @Deprecated
-  public List<String> brpop(String arg) {
-    return brpop(new String[] { arg });
   }
 
   /**
@@ -1844,11 +1826,11 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
    * <p>
    * {@code ZRANGEBYSCORE zset (1.3 5}
    * <p>
-   * Will return all the values with score > 1.3 and <= 5, while for instance:
+   * Will return all the values with score &gt; 1.3 and &lt;= 5, while for instance:
    * <p>
    * {@code ZRANGEBYSCORE zset (5 (10}
    * <p>
-   * Will return all the values with score > 5 and < 10 (5 and 10 excluded).
+   * Will return all the values with score &gt; 5 and &lt; 10 (5 and 10 excluded).
    * <p>
    * <b>Time complexity:</b>
    * <p>
@@ -1873,7 +1855,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     if (members == null) {
       return null;
     }
-    return new LinkedHashSet<String>(members);
+    return SetFromList.of(members);
   }
 
   public Set<String> zrangeByScore(final String key, final String min, final String max) {
@@ -1883,7 +1865,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     if (members == null) {
       return null;
     }
-    return new LinkedHashSet<String>(members);
+    return SetFromList.of(members);
   }
 
   /**
@@ -1912,11 +1894,11 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
    * <p>
    * {@code ZRANGEBYSCORE zset (1.3 5}
    * <p>
-   * Will return all the values with score > 1.3 and <= 5, while for instance:
+   * Will return all the values with score &gt; 1.3 and &lt;= 5, while for instance:
    * <p>
    * {@code ZRANGEBYSCORE zset (5 (10}
    * <p>
-   * Will return all the values with score > 5 and < 10 (5 and 10 excluded).
+   * Will return all the values with score &gt; 5 and &lt; 10 (5 and 10 excluded).
    * <p>
    * <b>Time complexity:</b>
    * <p>
@@ -1941,7 +1923,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     if (members == null) {
       return null;
     }
-    return new LinkedHashSet<String>(members);
+    return SetFromList.of(members);
   }
 
   public Set<String> zrangeByScore(final String key, final String min, final String max,
@@ -1952,7 +1934,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     if (members == null) {
       return null;
     }
-    return new LinkedHashSet<String>(members);
+    return SetFromList.of(members);
   }
 
   /**
@@ -1981,11 +1963,11 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
    * <p>
    * {@code ZRANGEBYSCORE zset (1.3 5}
    * <p>
-   * Will return all the values with score > 1.3 and <= 5, while for instance:
+   * Will return all the values with score &gt; 1.3 and &lt;= 5, while for instance:
    * <p>
    * {@code ZRANGEBYSCORE zset (5 (10}
    * <p>
-   * Will return all the values with score > 5 and < 10 (5 and 10 excluded).
+   * Will return all the values with score &gt; 5 and &lt; 10 (5 and 10 excluded).
    * <p>
    * <b>Time complexity:</b>
    * <p>
@@ -2005,15 +1987,13 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
   public Set<Tuple> zrangeByScoreWithScores(final String key, final double min, final double max) {
     checkIsInMulti();
     client.zrangeByScoreWithScores(key, min, max);
-    Set<Tuple> set = getTupledSet();
-    return set;
+    return getTupledSet();
   }
 
   public Set<Tuple> zrangeByScoreWithScores(final String key, final String min, final String max) {
     checkIsInMulti();
     client.zrangeByScoreWithScores(key, min, max);
-    Set<Tuple> set = getTupledSet();
-    return set;
+    return getTupledSet();
   }
 
   /**
@@ -2042,11 +2022,11 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
    * <p>
    * {@code ZRANGEBYSCORE zset (1.3 5}
    * <p>
-   * Will return all the values with score > 1.3 and <= 5, while for instance:
+   * Will return all the values with score &gt; 1.3 and &lt;= 5, while for instance:
    * <p>
    * {@code ZRANGEBYSCORE zset (5 (10}
    * <p>
-   * Will return all the values with score > 5 and < 10 (5 and 10 excluded).
+   * Will return all the values with score &gt; 5 and &lt; 10 (5 and 10 excluded).
    * <p>
    * <b>Time complexity:</b>
    * <p>
@@ -2067,16 +2047,14 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
       final int offset, final int count) {
     checkIsInMulti();
     client.zrangeByScoreWithScores(key, min, max, offset, count);
-    Set<Tuple> set = getTupledSet();
-    return set;
+    return getTupledSet();
   }
 
   public Set<Tuple> zrangeByScoreWithScores(final String key, final String min, final String max,
       final int offset, final int count) {
     checkIsInMulti();
     client.zrangeByScoreWithScores(key, min, max, offset, count);
-    Set<Tuple> set = getTupledSet();
-    return set;
+    return getTupledSet();
   }
 
   private Set<Tuple> getTupledSet() {
@@ -2085,7 +2063,10 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     if (membersWithScores == null) {
       return null;
     }
-    Set<Tuple> set = new LinkedHashSet<Tuple>();
+    if (membersWithScores.size() == 0) {
+      return Collections.emptySet();
+    }
+    Set<Tuple> set = new LinkedHashSet<Tuple>(membersWithScores.size() / 2, 1.0f);
     Iterator<String> iterator = membersWithScores.iterator();
     while (iterator.hasNext()) {
       set.add(new Tuple(iterator.next(), Double.valueOf(iterator.next())));
@@ -2100,7 +2081,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     if (members == null) {
       return null;
     }
-    return new LinkedHashSet<String>(members);
+    return SetFromList.of(members);
   }
 
   public Set<String> zrevrangeByScore(final String key, final String max, final String min) {
@@ -2110,7 +2091,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     if (members == null) {
       return null;
     }
-    return new LinkedHashSet<String>(members);
+    return SetFromList.of(members);
   }
 
   public Set<String> zrevrangeByScore(final String key, final double max, final double min,
@@ -2121,30 +2102,27 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     if (members == null) {
       return null;
     }
-    return new LinkedHashSet<String>(members);
+    return SetFromList.of(members);
   }
 
   public Set<Tuple> zrevrangeByScoreWithScores(final String key, final double max, final double min) {
     checkIsInMulti();
     client.zrevrangeByScoreWithScores(key, max, min);
-    Set<Tuple> set = getTupledSet();
-    return set;
+    return getTupledSet();
   }
 
   public Set<Tuple> zrevrangeByScoreWithScores(final String key, final double max,
       final double min, final int offset, final int count) {
     checkIsInMulti();
     client.zrevrangeByScoreWithScores(key, max, min, offset, count);
-    Set<Tuple> set = getTupledSet();
-    return set;
+    return getTupledSet();
   }
 
   public Set<Tuple> zrevrangeByScoreWithScores(final String key, final String max,
       final String min, final int offset, final int count) {
     checkIsInMulti();
     client.zrevrangeByScoreWithScores(key, max, min, offset, count);
-    Set<Tuple> set = getTupledSet();
-    return set;
+    return getTupledSet();
   }
 
   public Set<String> zrevrangeByScore(final String key, final String max, final String min,
@@ -2155,14 +2133,13 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     if (members == null) {
       return null;
     }
-    return new LinkedHashSet<String>(members);
+    return SetFromList.of(members);
   }
 
   public Set<Tuple> zrevrangeByScoreWithScores(final String key, final String max, final String min) {
     checkIsInMulti();
     client.zrevrangeByScoreWithScores(key, max, min);
-    Set<Tuple> set = getTupledSet();
-    return set;
+    return getTupledSet();
   }
 
   /**
@@ -2367,7 +2344,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     if (members == null) {
       return null;
     }
-    return new LinkedHashSet<String>(members);
+    return SetFromList.of(members);
   }
 
   @Override
@@ -2379,7 +2356,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     if (members == null) {
       return null;
     }
-    return new LinkedHashSet<String>(members);
+    return SetFromList.of(members);
   }
 
   @Override
@@ -2390,7 +2367,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     if (members == null) {
       return null;
     }
-    return new LinkedHashSet<String>(members);
+    return SetFromList.of(members);
   }
 
   @Override
@@ -2401,7 +2378,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     if (members == null) {
       return null;
     }
-    return new LinkedHashSet<String>(members);
+    return SetFromList.of(members);
   }
 
   @Override
@@ -2523,7 +2500,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
    * are reported as a list of key-value pairs.
    * <p>
    * <b>Example:</b>
-   * 
+   *
    * <pre>
    * $ redis-cli config get '*'
    * 1. "dbfilename"
@@ -2538,7 +2515,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
    * 10. "everysec"
    * 11. "save"
    * 12. "3600 1 300 100 60 10000"
-   * 
+   *
    * $ redis-cli config get 'm*'
    * 1. "masterauth"
    * 2. (nil)
@@ -2744,7 +2721,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
 
   /**
    * <pre>
-   * redis 127.0.0.1:26381> sentinel masters
+   * redis 127.0.0.1:26381&gt; sentinel masters
    * 1)  1) "name"
    *     2) "mymaster"
    *     3) "ip"
@@ -2769,7 +2746,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
    *    22) "2"
    *    23) "quorum"
    *    24) "2"
-   * 
+   *
    * </pre>
    * @return
    */
@@ -2787,7 +2764,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
 
   /**
    * <pre>
-   * redis 127.0.0.1:26381> sentinel get-master-addr-by-name mymaster
+   * redis 127.0.0.1:26381&gt; sentinel get-master-addr-by-name mymaster
    * 1) "127.0.0.1"
    * 2) "6379"
    * </pre>
@@ -2802,7 +2779,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
 
   /**
    * <pre>
-   * redis 127.0.0.1:26381> sentinel reset mymaster
+   * redis 127.0.0.1:26381&gt; sentinel reset mymaster
    * (integer) 1
    * </pre>
    * @param pattern
@@ -2815,7 +2792,7 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
 
   /**
    * <pre>
-   * redis 127.0.0.1:26381> sentinel slaves mymaster
+   * redis 127.0.0.1:26381&gt; sentinel slaves mymaster
    * 1)  1) "name"
    *     2) "127.0.0.1:6380"
    *     3) "ip"
@@ -2921,6 +2898,15 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     client.pttl(key);
     return client.getIntegerReply();
   }
+
+  /**
+   * PSETEX works exactly like {@link #setex(String, int, String)} }with the sole difference that the expire time is specified in milliseconds instead of seconds.
+   * Time complexity: O(1)
+   * @param key
+   * @param milliseconds
+   * @param value
+   * @return Status code reply
+   */
 
   public String psetex(final String key, final long milliseconds, final String value) {
     checkIsInMulti();
@@ -3037,6 +3023,12 @@ public class Jedis extends BinaryJedis implements JedisCommands, MultiKeyCommand
     checkIsInMulti();
     client.clusterNodes();
     return client.getBulkReply();
+  }
+
+  @Override
+  public String readonly() {
+    client.readonly();
+    return client.getStatusCodeReply();
   }
 
   public String clusterMeet(final String ip, final int port) {

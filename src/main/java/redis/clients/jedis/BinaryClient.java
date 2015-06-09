@@ -63,11 +63,10 @@ public class BinaryClient extends Connection {
   private byte[][] joinParameters(byte[] first, byte[][] rest) {
     byte[][] result = new byte[rest.length + 1][];
     result[0] = first;
-    for (int i = 0; i < rest.length; i++) {
-      result[i + 1] = rest[i];
-    }
+    System.arraycopy(rest, 0, result, 1, rest.length);
     return result;
   }
+
 
   public void setPassword(final String password) {
     this.password = password;
@@ -1198,24 +1197,7 @@ public class BinaryClient extends Connection {
     sendCommand(PFMERGE, joinParameters(destkey, sourcekeys));
   }
 
-  // Geo Commands
-
-
-  public void geoadd(final byte[] key, final double lat, final double lng, final byte[] member){
-    sendCommand(GEOADD, key ,toByteArray(lat),toByteArray(lng),member);
-  }
-
-  public void georadius(final byte[] key, final double lat, final double lng, final double radius,
-                        final byte[] radius_type, final byte[]... fields){
-    byte[][] fixedParams = {key, toByteArray(lat), toByteArray(lng), toByteArray(radius), radius_type};
-    byte[][] commandArgs = joinParameters(fixedParams, fields);
-    sendCommand(GEORADIUS, commandArgs);
-  }
-
-  private byte[][] joinParameters(byte[][] fixedParams, byte[][] fields) {
-    byte[][] finalParams = new byte[fixedParams.length + fields.length][];
-    System.arraycopy(fixedParams, 0, finalParams, 0, fixedParams.length);
-    System.arraycopy(fields, 0, finalParams, fixedParams.length, fields.length);
-    return finalParams;
+  public void readonly() {
+    sendCommand(READONLY);
   }
 }

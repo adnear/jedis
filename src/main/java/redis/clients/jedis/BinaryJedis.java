@@ -5,8 +5,10 @@ import static redis.clients.jedis.Protocol.toByteArray;
 import java.io.Closeable;
 import java.net.URI;
 import java.util.AbstractMap;
+import java.util.AbstractSet;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -132,7 +134,7 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
    * @param nxxx NX|XX, NX -- Only set the key if it does not already exist. XX -- Only set the key
    *          if it already exist.
    * @param expx EX|PX, expire time units: EX = seconds; PX = milliseconds
-   * @param time expire time in the units of {@param #expx}
+   * @param time expire time in the units of <code>expx</code>
    * @return Status code reply
    */
   public String set(final byte[] key, final byte[] value, final byte[] nxxx, final byte[] expx,
@@ -256,7 +258,7 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
   public Set<byte[]> keys(final byte[] pattern) {
     checkIsInMulti();
     client.keys(pattern);
-    return new HashSet<byte[]>(client.getBinaryMultiBulkReply());
+    return SetFromList.of(client.getBinaryMultiBulkReply());
   }
 
   /**
@@ -329,43 +331,12 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
    * @param key
    * @param seconds
    * @return Integer reply, specifically: 1: the timeout was set. 0: the timeout was not set since
-   *         the key already has an associated timeout (this may happen only in Redis versions <
-   *         2.1.3, Redis >= 2.1.3 will happily update the timeout), or the key does not exist.
+   *         the key already has an associated timeout (this may happen only in Redis versions &lt;
+   *         2.1.3, Redis &gt;= 2.1.3 will happily update the timeout), or the key does not exist.
    */
   public Long expire(final byte[] key, final int seconds) {
     checkIsInMulti();
     client.expire(key, seconds);
-    return client.getIntegerReply();
-  }
-
-  /**
-   * @deprecated use BinaryJedis.pexpire(byte[], long) or Jedis.pexpire(String,long) Set a timeout
-   *             on the specified key. After the timeout the key will be automatically deleted by
-   *             the server. A key with an associated timeout is said to be volatile in Redis
-   *             terminology.
-   *             <p>
-   *             Voltile keys are stored on disk like the other keys, the timeout is persistent too
-   *             like all the other aspects of the dataset. Saving a dataset containing expires and
-   *             stopping the server does not stop the flow of time as Redis stores on disk the time
-   *             when the key will no longer be available as Unix time, and not the remaining
-   *             milliseconds.
-   *             <p>
-   *             Since Redis 2.1.3 you can update the value of the timeout of a key already having
-   *             an expire set. It is also possible to undo the expire at all turning the key into a
-   *             normal key using the {@link #persist(byte[]) PERSIST} command.
-   *             <p>
-   *             Time complexity: O(1)
-   * @see <ahref="http://redis.io/commands/pexpire">PEXPIRE Command</a>
-   * @param key
-   * @param milliseconds
-   * @return Integer reply, specifically: 1: the timeout was set. 0: the timeout was not set since
-   *         the key already has an associated timeout (this may happen only in Redis versions <
-   *         2.1.3, Redis >= 2.1.3 will happily update the timeout), or the key does not exist.
-   */
-  @Deprecated
-  public Long pexpire(String key, final long milliseconds) {
-    checkIsInMulti();
-    client.pexpire(key, milliseconds);
     return client.getIntegerReply();
   }
 
@@ -389,8 +360,8 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
    * @param key
    * @param unixTime
    * @return Integer reply, specifically: 1: the timeout was set. 0: the timeout was not set since
-   *         the key already has an associated timeout (this may happen only in Redis versions <
-   *         2.1.3, Redis >= 2.1.3 will happily update the timeout), or the key does not exist.
+   *         the key already has an associated timeout (this may happen only in Redis versions &lt;
+   *         2.1.3, Redis &gt;= 2.1.3 will happily update the timeout), or the key does not exist.
    */
   public Long expireAt(final byte[] key, final long unixTime) {
     checkIsInMulti();
@@ -901,8 +872,7 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
   public Set<byte[]> hkeys(final byte[] key) {
     checkIsInMulti();
     client.hkeys(key);
-    final List<byte[]> lresult = client.getBinaryMultiBulkReply();
-    return new HashSet<byte[]>(lresult);
+    return SetFromList.of(client.getBinaryMultiBulkReply());
   }
 
   /**
@@ -1011,8 +981,8 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
    * <b>Out-of-range indexes</b>
    * <p>
    * Indexes out of range will not produce an error: if start is over the end of the list, or start
-   * > end, an empty list is returned. If end is over the end of the list Redis will threat it just
-   * like the last element of the list.
+   * &gt; end, an empty list is returned. If end is over the end of the list Redis will threat it
+   * just like the last element of the list.
    * <p>
    * Time complexity: O(start+n) (with n being the length of the range and start being the start
    * offset)
@@ -1039,7 +1009,7 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
    * example -1 is the last element of the list, -2 the penultimate element and so on.
    * <p>
    * Indexes out of range will not produce an error: if start is over the end of the list, or start
-   * > end, an empty list is left as value. If end over the end of the list Redis will threat it
+   * &gt; end, an empty list is left as value. If end over the end of the list Redis will threat it
    * just like the last element of the list.
    * <p>
    * Hint: the obvious use of LTRIM is together with LPUSH/RPUSH. For example:
@@ -1212,8 +1182,7 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
   public Set<byte[]> smembers(final byte[] key) {
     checkIsInMulti();
     client.smembers(key);
-    final List<byte[]> members = client.getBinaryMultiBulkReply();
-    return new HashSet<byte[]>(members);
+    return SetFromList.of(client.getBinaryMultiBulkReply());
   }
 
   /**
@@ -1252,8 +1221,7 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
   public Set<byte[]> spop(final byte[] key, final long count) {
     checkIsInMulti();
     client.spop(key, count);
-    final List<byte[]> members = client.getBinaryMultiBulkReply();
-    return new HashSet<byte[]>(members);
+    return SetFromList.of(client.getBinaryMultiBulkReply());
   }
 
   /**
@@ -1327,8 +1295,7 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
   public Set<byte[]> sinter(final byte[]... keys) {
     checkIsInMulti();
     client.sinter(keys);
-    final List<byte[]> members = client.getBinaryMultiBulkReply();
-    return new HashSet<byte[]>(members);
+    return SetFromList.of(client.getBinaryMultiBulkReply());
   }
 
   /**
@@ -1362,8 +1329,7 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
   public Set<byte[]> sunion(final byte[]... keys) {
     checkIsInMulti();
     client.sunion(keys);
-    final List<byte[]> members = client.getBinaryMultiBulkReply();
-    return new HashSet<byte[]>(members);
+	return SetFromList.of(client.getBinaryMultiBulkReply());
   }
 
   /**
@@ -1385,14 +1351,14 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
    * Return the difference between the Set stored at key1 and all the Sets key2, ..., keyN
    * <p>
    * <b>Example:</b>
-   * 
+   *
    * <pre>
    * key1 = [x, a, b, c]
    * key2 = [c]
    * key3 = [a, d]
-   * SDIFF key1,key2,key3 => [x, b]
+   * SDIFF key1,key2,key3 =&gt; [x, b]
    * </pre>
-   * 
+   *
    * Non existing keys are considered like empty sets.
    * <p>
    * <b>Time complexity:</b>
@@ -1405,8 +1371,7 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
   public Set<byte[]> sdiff(final byte[]... keys) {
     checkIsInMulti();
     client.sdiff(keys);
-    final List<byte[]> members = client.getBinaryMultiBulkReply();
-    return new HashSet<byte[]>(members);
+    return SetFromList.of(client.getBinaryMultiBulkReply());
   }
 
   /**
@@ -1475,8 +1440,7 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
   public Set<byte[]> zrange(final byte[] key, final long start, final long end) {
     checkIsInMulti();
     client.zrange(key, start, end);
-    final List<byte[]> members = client.getBinaryMultiBulkReply();
-    return new LinkedHashSet<byte[]>(members);
+    return SetFromList.of(client.getBinaryMultiBulkReply());
   }
 
   /**
@@ -1568,8 +1532,7 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
   public Set<byte[]> zrevrange(final byte[] key, final long start, final long end) {
     checkIsInMulti();
     client.zrevrange(key, start, end);
-    final List<byte[]> members = client.getBinaryMultiBulkReply();
-    return new LinkedHashSet<byte[]>(members);
+    return SetFromList.of(client.getBinaryMultiBulkReply());
   }
 
   public Set<Tuple> zrangeWithScores(final byte[] key, final long start, final long end) {
@@ -1698,67 +1661,67 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
    * <b>examples:</b>
    * <p>
    * Given are the following sets and key/values:
-   * 
+   *
    * <pre>
    * x = [1, 2, 3]
    * y = [a, b, c]
-   * 
+   *
    * k1 = z
    * k2 = y
    * k3 = x
-   * 
+   *
    * w1 = 9
    * w2 = 8
    * w3 = 7
    * </pre>
-   * 
+   *
    * Sort Order:
-   * 
+   *
    * <pre>
    * sort(x) or sort(x, sp.asc())
-   * -> [1, 2, 3]
-   * 
+   * -&gt; [1, 2, 3]
+   *
    * sort(x, sp.desc())
-   * -> [3, 2, 1]
-   * 
+   * -&gt; [3, 2, 1]
+   *
    * sort(y)
-   * -> [c, a, b]
-   * 
+   * -&gt; [c, a, b]
+   *
    * sort(y, sp.alpha())
-   * -> [a, b, c]
-   * 
+   * -&gt; [a, b, c]
+   *
    * sort(y, sp.alpha().desc())
-   * -> [c, a, b]
+   * -&gt; [c, a, b]
    * </pre>
-   * 
+   *
    * Limit (e.g. for Pagination):
-   * 
+   *
    * <pre>
    * sort(x, sp.limit(0, 2))
-   * -> [1, 2]
-   * 
+   * -&gt; [1, 2]
+   *
    * sort(y, sp.alpha().desc().limit(1, 2))
-   * -> [b, a]
+   * -&gt; [b, a]
    * </pre>
-   * 
+   *
    * Sorting by external keys:
-   * 
+   *
    * <pre>
    * sort(x, sb.by(w*))
-   * -> [3, 2, 1]
-   * 
+   * -&gt; [3, 2, 1]
+   *
    * sort(x, sb.by(w*).desc())
-   * -> [1, 2, 3]
+   * -&gt; [1, 2, 3]
    * </pre>
-   * 
+   *
    * Getting external keys:
-   * 
+   *
    * <pre>
    * sort(x, sp.by(w*).get(k*))
-   * -> [x, y, z]
-   * 
+   * -&gt; [x, y, z]
+   *
    * sort(x, sp.by(w*).get(#).get(k*))
-   * -> [3, x, 2, y, 1, z]
+   * -&gt; [3, x, 2, y, 1, z]
    * </pre>
    * @see #sort(byte[])
    * @see #sort(byte[], SortingParams, byte[])
@@ -1949,22 +1912,6 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
     return brpop(getArgsAddTimeout(timeout, keys));
   }
 
-  /**
-   * @deprecated unusable command, this command will be removed in 3.0.0.
-   */
-  @Deprecated
-  public List<byte[]> blpop(byte[] arg) {
-    return blpop(new byte[][] { arg });
-  }
-
-  /**
-   * @deprecated unusable command, this command will be removed in 3.0.0.
-   */
-  @Deprecated
-  public List<byte[]> brpop(byte[] arg) {
-    return brpop(new byte[][] { arg });
-  }
-
   public List<byte[]> blpop(byte[]... args) {
     checkIsInMulti();
     client.blpop(args);
@@ -2047,11 +1994,11 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
    * <p>
    * {@code ZRANGEBYSCORE zset (1.3 5}
    * <p>
-   * Will return all the values with score > 1.3 and <= 5, while for instance:
+   * Will return all the values with score &gt; 1.3 and &lt;= 5, while for instance:
    * <p>
    * {@code ZRANGEBYSCORE zset (5 (10}
    * <p>
-   * Will return all the values with score > 5 and < 10 (5 and 10 excluded).
+   * Will return all the values with score &gt; 5 and &lt; 10 (5 and 10 excluded).
    * <p>
    * <b>Time complexity:</b>
    * <p>
@@ -2075,7 +2022,7 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
   public Set<byte[]> zrangeByScore(final byte[] key, final byte[] min, final byte[] max) {
     checkIsInMulti();
     client.zrangeByScore(key, min, max);
-    return new LinkedHashSet<byte[]>(client.getBinaryMultiBulkReply());
+    return SetFromList.of(client.getBinaryMultiBulkReply());
   }
 
   /**
@@ -2104,11 +2051,11 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
    * <p>
    * {@code ZRANGEBYSCORE zset (1.3 5}
    * <p>
-   * Will return all the values with score > 1.3 and <= 5, while for instance:
+   * Will return all the values with score &gt; 1.3 and &lt;= 5, while for instance:
    * <p>
    * {@code ZRANGEBYSCORE zset (5 (10}
    * <p>
-   * Will return all the values with score > 5 and < 10 (5 and 10 excluded).
+   * Will return all the values with score &gt; 5 and &lt; 10 (5 and 10 excluded).
    * <p>
    * <b>Time complexity:</b>
    * <p>
@@ -2134,7 +2081,7 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
       final int offset, final int count) {
     checkIsInMulti();
     client.zrangeByScore(key, min, max, offset, count);
-    return new LinkedHashSet<byte[]>(client.getBinaryMultiBulkReply());
+    return SetFromList.of(client.getBinaryMultiBulkReply());
   }
 
   /**
@@ -2163,11 +2110,11 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
    * <p>
    * {@code ZRANGEBYSCORE zset (1.3 5}
    * <p>
-   * Will return all the values with score > 1.3 and <= 5, while for instance:
+   * Will return all the values with score &gt; 1.3 and &lt;= 5, while for instance:
    * <p>
    * {@code ZRANGEBYSCORE zset (5 (10}
    * <p>
-   * Will return all the values with score > 5 and < 10 (5 and 10 excluded).
+   * Will return all the values with score &gt; 5 and &lt; 10 (5 and 10 excluded).
    * <p>
    * <b>Time complexity:</b>
    * <p>
@@ -2220,11 +2167,11 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
    * <p>
    * {@code ZRANGEBYSCORE zset (1.3 5}
    * <p>
-   * Will return all the values with score > 1.3 and <= 5, while for instance:
+   * Will return all the values with score &gt; 1.3 and &lt;= 5, while for instance:
    * <p>
    * {@code ZRANGEBYSCORE zset (5 (10}
    * <p>
-   * Will return all the values with score > 5 and < 10 (5 and 10 excluded).
+   * Will return all the values with score &gt; 5 and &lt; 10 (5 and 10 excluded).
    * <p>
    * <b>Time complexity:</b>
    * <p>
@@ -2256,7 +2203,10 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
   private Set<Tuple> getBinaryTupledSet() {
     checkIsInMulti();
     List<byte[]> membersWithScores = client.getBinaryMultiBulkReply();
-    Set<Tuple> set = new LinkedHashSet<Tuple>();
+    if (membersWithScores.size() == 0) {
+      return Collections.emptySet();
+    }
+    Set<Tuple> set = new LinkedHashSet<Tuple>(membersWithScores.size() / 2, 1.0f);
     Iterator<byte[]> iterator = membersWithScores.iterator();
     while (iterator.hasNext()) {
       set.add(new Tuple(iterator.next(), Double.valueOf(SafeEncoder.encode(iterator.next()))));
@@ -2271,7 +2221,7 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
   public Set<byte[]> zrevrangeByScore(final byte[] key, final byte[] max, final byte[] min) {
     checkIsInMulti();
     client.zrevrangeByScore(key, max, min);
-    return new LinkedHashSet<byte[]>(client.getBinaryMultiBulkReply());
+    return SetFromList.of(client.getBinaryMultiBulkReply());
   }
 
   public Set<byte[]> zrevrangeByScore(final byte[] key, final double max, final double min,
@@ -2283,7 +2233,7 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
       final int offset, final int count) {
     checkIsInMulti();
     client.zrevrangeByScore(key, max, min, offset, count);
-    return new LinkedHashSet<byte[]>(client.getBinaryMultiBulkReply());
+    return SetFromList.of(client.getBinaryMultiBulkReply());
   }
 
   public Set<Tuple> zrevrangeByScoreWithScores(final byte[] key, final double max, final double min) {
@@ -2500,7 +2450,7 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
   public Set<byte[]> zrangeByLex(final byte[] key, final byte[] min, final byte[] max) {
     checkIsInMulti();
     client.zrangeByLex(key, min, max);
-    return new LinkedHashSet<byte[]>(client.getBinaryMultiBulkReply());
+    return SetFromList.of(client.getBinaryMultiBulkReply());
   }
 
   @Override
@@ -2508,21 +2458,21 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
       final int offset, final int count) {
     checkIsInMulti();
     client.zrangeByLex(key, min, max, offset, count);
-    return new LinkedHashSet<byte[]>(client.getBinaryMultiBulkReply());
+    return SetFromList.of(client.getBinaryMultiBulkReply());
   }
 
   @Override
   public Set<byte[]> zrevrangeByLex(byte[] key, byte[] max, byte[] min) {
     checkIsInMulti();
     client.zrevrangeByLex(key, max, min);
-    return new LinkedHashSet<byte[]>(client.getBinaryMultiBulkReply());
+    return SetFromList.of(client.getBinaryMultiBulkReply());
   }
 
   @Override
   public Set<byte[]> zrevrangeByLex(byte[] key, byte[] max, byte[] min, int offset, int count) {
     checkIsInMulti();
     client.zrevrangeByLex(key, max, min, offset, count);
-    return new LinkedHashSet<byte[]>(client.getBinaryMultiBulkReply());
+    return SetFromList.of(client.getBinaryMultiBulkReply());
   }
 
   @Override
@@ -2625,7 +2575,7 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
    * <b>Format of the returned String:</b>
    * <p>
    * All the fields are in the form field:value
-   * 
+   *
    * <pre>
    * edis_version:0.07
    * connected_clients:1
@@ -2638,7 +2588,7 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
    * uptime_in_seconds:25
    * uptime_in_days:0
    * </pre>
-   * 
+   *
    * <b>Notes</b>
    * <p>
    * used_memory is returned in bytes, and is the total number of bytes allocated by the program
@@ -2716,7 +2666,7 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
    * are reported as a list of key-value pairs.
    * <p>
    * <b>Example:</b>
-   * 
+   *
    * <pre>
    * $ redis-cli config get '*'
    * 1. "dbfilename"
@@ -2731,7 +2681,7 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
    * 10. "everysec"
    * 11. "save"
    * 12. "3600 1 300 100 60 10000"
-   * 
+   *
    * $ redis-cli config get 'm*'
    * 1. "masterauth"
    * 2. (nil)
@@ -3101,6 +3051,15 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
     return client.getIntegerReply();
   }
 
+
+  /**
+   * PSETEX works exactly like {@link #setex(byte[], int, byte[])}  }with the sole difference that the expire time is specified in milliseconds instead of seconds.
+   * Time complexity: O(1)
+   * @param key
+   * @param milliseconds
+   * @param value
+   * @return Status code reply
+   */
   public String psetex(final byte[] key, final long milliseconds, final byte[] value) {
     checkIsInMulti();
     client.psetex(key, milliseconds, value);
@@ -3259,4 +3218,98 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
     return new ScanResult<Tuple>(newcursor, results);
   }
 
+  /**
+   * A decorator to implement Set from List. Assume that given List do not contains duplicated
+   * values. The resulting set displays the same ordering, concurrency, and performance
+   * characteristics as the backing list. This class should be used only for Redis commands which
+   * return Set result.
+   * @param <E>
+   */
+  protected static class SetFromList<E> extends AbstractSet<E> {
+    private final List<E> list;
+
+    private SetFromList(List<E> list) {
+      if (list == null) {
+        throw new NullPointerException("list");
+      }
+      this.list = list;
+    }
+
+    public void clear() {
+      list.clear();
+    }
+
+    public int size() {
+      return list.size();
+    }
+
+    public boolean isEmpty() {
+      return list.isEmpty();
+    }
+
+    public boolean contains(Object o) {
+      return list.contains(o);
+    }
+
+    public boolean remove(Object o) {
+      return list.remove(o);
+    }
+
+    public boolean add(E e) {
+      return !contains(e) && list.add(e);
+    }
+
+    public Iterator<E> iterator() {
+      return list.iterator();
+    }
+
+    public Object[] toArray() {
+      return list.toArray();
+    }
+
+    public <T> T[] toArray(T[] a) {
+      return list.toArray(a);
+    }
+
+    public String toString() {
+      return list.toString();
+    }
+
+    public int hashCode() {
+      return list.hashCode();
+    }
+
+    public boolean equals(Object o) {
+      if (o == this) {
+        return true;
+      }
+
+      if (!(o instanceof Set)) {
+        return false;
+      }
+
+      Collection<?> c = (Collection<?>) o;
+      if (c.size() != size()) {
+        return false;
+      }
+
+      return containsAll(c);
+    }
+
+    public boolean containsAll(Collection<?> c) {
+      return list.containsAll(c);
+    }
+
+    public boolean removeAll(Collection<?> c) {
+      return list.removeAll(c);
+    }
+
+    public boolean retainAll(Collection<?> c) {
+      return list.retainAll(c);
+    }
+
+    protected static <E> SetFromList<E> of(List<E> list) {
+      return new SetFromList<E>(list);
+    }
+  }
 }

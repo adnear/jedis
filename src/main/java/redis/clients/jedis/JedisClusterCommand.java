@@ -7,6 +7,7 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisMovedDataException;
 import redis.clients.jedis.exceptions.JedisRedirectionException;
 import redis.clients.util.JedisClusterCRC16;
+import redis.clients.util.SafeEncoder;
 
 public abstract class JedisClusterCommand<T> {
 
@@ -26,10 +27,72 @@ public abstract class JedisClusterCommand<T> {
       throw new JedisClusterException("No way to dispatch this command to Redis Cluster.");
     }
 
+    return runWithRetries(SafeEncoder.encode(key), this.redirections, false, false);
+  }
+
+  public T run(int keyCount, String... keys) {
+    if (keys == null || keys.length == 0) {
+      throw new JedisClusterException("No way to dispatch this command to Redis Cluster.");
+    }
+
+    // For multiple keys, only execute if they all share the
+    // same connection slot.
+    if (keys.length > 1) {
+      int slot = JedisClusterCRC16.getSlot(keys[0]);
+      for (int i = 1; i < keyCount; i++) {
+        int nextSlot = JedisClusterCRC16.getSlot(keys[i]);
+        if (slot != nextSlot) {
+          throw new JedisClusterException("No way to dispatch this command to Redis Cluster "
+              + "because keys have different slots.");
+        }
+      }
+    }
+
+    return runWithRetries(SafeEncoder.encode(keys[0]), this.redirections, false, false);
+  }
+
+  public T runBinary(byte[] key) {
+    if (key == null) {
+      throw new JedisClusterException("No way to dispatch this command to Redis Cluster.");
+    }
+
     return runWithRetries(key, this.redirections, false, false);
   }
 
-  private T runWithRetries(String key, int redirections, boolean tryRandomNode, boolean asking) {
+  public T runBinary(int keyCount, byte[]... keys) {
+    if (keys == null || keys.length == 0) {
+      throw new JedisClusterException("No way to dispatch this command to Redis Cluster.");
+    }
+
+    // For multiple keys, only execute if they all share the
+    // same connection slot.
+    if (keys.length > 1) {
+      int slot = JedisClusterCRC16.getSlot(keys[0]);
+      for (int i = 1; i < keyCount; i++) {
+        int nextSlot = JedisClusterCRC16.getSlot(keys[i]);
+        if (slot != nextSlot) {
+          throw new JedisClusterException("No way to dispatch this command to Redis Cluster "
+              + "because keys have different slots.");
+        }
+      }
+    }
+
+    return runWithRetries(keys[0], this.redirections, false, false);
+  }
+
+  public T runWithAnyNode() {
+    Jedis connection = null;
+    try {
+      connection = connectionHandler.getConnection();
+      return execute(connection);
+    } catch (JedisConnectionException e) {
+      throw e;
+    } finally {
+      releaseConnection(connection);
+    }
+  }
+
+  private T runWithRetries(byte[] key, int redirections, boolean tryRandomNode, boolean asking) {
     if (redirections <= 0) {
       throw new JedisClusterMaxRedirectionsException("Too many Cluster redirections?");
     }
@@ -60,12 +123,17 @@ public abstract class JedisClusterCommand<T> {
         throw jce;
       }
 
-      releaseConnection(connection, true);
+      // release current connection before recursion
+      releaseConnection(connection);
       connection = null;
 
       // retry with random connection
       return runWithRetries(key, redirections - 1, true, asking);
     } catch (JedisRedirectionException jre) {
+      // release current connection before recursion or renewing
+      releaseConnection(connection);
+      connection = null;
+
       if (jre instanceof JedisAskDataException) {
         asking = true;
         askConnection.set(this.connectionHandler.getConnectionFromNode(jre.getTargetNode()));
@@ -77,23 +145,15 @@ public abstract class JedisClusterCommand<T> {
         throw new JedisClusterException(jre);
       }
 
-      releaseConnection(connection, false);
-      connection = null;
-
       return runWithRetries(key, redirections - 1, false, asking);
     } finally {
-      releaseConnection(connection, false);
+      releaseConnection(connection);
     }
-
   }
 
-  private void releaseConnection(Jedis connection, boolean broken) {
+  private void releaseConnection(Jedis connection) {
     if (connection != null) {
-      if (broken) {
-        connectionHandler.returnBrokenConnection(connection);
-      } else {
-        connectionHandler.returnConnection(connection);
-      }
+      connection.close();
     }
   }
 
