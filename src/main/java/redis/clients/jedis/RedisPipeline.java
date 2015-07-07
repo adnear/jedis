@@ -207,4 +207,6 @@ public interface RedisPipeline {
   Response<Long> pfadd(final String key, final String... elements);
 
   Response<Long> pfcount(final String key);
+
+  Response<List<String>> georadius(final String key,final double lat,final double lon,final double radius,final String radius_type,String... fields);
 }

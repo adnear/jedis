@@ -528,4 +528,11 @@ abstract class MultiKeyPipelineBase extends PipelineBase implements MultiKeyBina
     return getResponse(BuilderFactory.STRING);
   }
 
+  @Override
+  public Response<List<String>> georadius(String key, double lat, double lon,
+                                          double radius, String radius_type, String... fields) {
+    client.georadius(key, lat, lon, radius, radius_type, fields);
+    return getResponse(BuilderFactory.STRING_LIST);
+  }
+
 }

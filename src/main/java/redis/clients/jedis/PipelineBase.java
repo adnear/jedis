@@ -1264,4 +1264,11 @@ abstract class PipelineBase extends Queable implements BinaryRedisPipeline, Redi
     return getResponse(BuilderFactory.LONG);
   }
 
+  @Override
+  public Response<List<String>> georadius(final String key,final double lat,final double lon,final double radius,
+                                          final String radius_type,String... fields) {
+    getClient(key).georadius(key, lat, lon, radius, radius_type, fields);
+    return getResponse(BuilderFactory.STRING_LIST);
+  }
+
 }
