@@ -1507,6 +1507,16 @@ public class JedisCluster implements JedisCommands, BasicCommands, Closeable {
   }
 
   @Override
+  public String pfmerge(final String destKey,final String... sourceKeys ) {
+    return new JedisClusterCommand<String>(connectionHandler, maxRedirections) {
+      @Override
+      public String execute(Jedis connection) {
+        return connection.pfmerge(destKey, sourceKeys);
+      }
+    }.run(destKey);
+  }
+
+  @Override
   public List<String> blpop(final int timeout, final String key) {
     return new JedisClusterCommand<List<String>>(connectionHandler, maxRedirections) {
       @Override

@@ -257,6 +257,8 @@ public interface JedisCommands {
   Long pfadd(final String key, final String... elements);
 
   long pfcount(final String key);
+  
+  String pfmerge(final String destKey, String... sourceKeys);
 
 
 
